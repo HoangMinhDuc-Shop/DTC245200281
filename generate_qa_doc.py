@@ -11,13 +11,13 @@ import shutil
 def create_qa_document(output_path):
     doc = docx.Document()
 
-    # Set page margins (1 inch)
+    # Set page margins (0.8 - 0.9 inch)
     sections = doc.sections
     for section in sections:
         section.top_margin = Inches(0.8)
         section.bottom_margin = Inches(0.8)
-        section.left_margin = Inches(0.9)
-        section.right_margin = Inches(0.9)
+        section.left_margin = Inches(0.85)
+        section.right_margin = Inches(0.85)
 
     # Helper styling functions
     def set_cell_background(cell, hex_color):
@@ -243,9 +243,9 @@ def create_qa_document(output_path):
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
     # ==========================================
-    # PHẦN 3: BỘ 25 CÂU HỎI VẤN ĐÁP THEO 7 TIÊU CHÍ
+    # PHẦN 3: BỘ CÂU HỎI VẤN ĐÁP THEO 7 TIÊU CHÍ
     # ==========================================
-    add_section_header("PHẦN 3: BỘ 25 CÂU HỎI VẤN ĐÁP CHUYÊN SÂU & CÂU TRẢ LỜI MẪU", "❓")
+    add_section_header("PHẦN 3: BỘ 27 CÂU HỎI VẤN ĐÁP CHUYÊN SÂU & CÂU TRẢ LỜI MẪU", "❓")
 
     # --- NHÓM 1: GIT & GITHUB ---
     p_group = doc.add_paragraph()
@@ -352,13 +352,52 @@ def create_qa_document(output_path):
     rg4.font.bold = True
     rg4.font.color.rgb = RGBColor(30, 41, 59)
 
-    add_question(9, "Prometheus hoạt động theo mô hình Pull hay Push? Cơ chế thu thập dữ liệu diễn ra như thế nào?")
+    add_question(9, "Prometheus là gì? Tác dụng, khái niệm và cơ chế hoạt động của Prometheus trong hệ thống?")
     add_answer(
-        "Prometheus hoạt động theo mô hình PULL (kéo dữ liệu). Cứ sau mỗi chu kỳ định kỳ (scrape_interval = 10 giây), máy chủ Prometheus sẽ chủ động gửi yêu cầu HTTP GET tới endpoint /metrics của các dịch vụ và Exporter mục tiêu. Dữ liệu nhận về ở định dạng văn bản chuẩn Prometheus (gồm tên metric, nhãn và giá trị), sau đó được lưu vào cơ sở dữ liệu chuỗi thời gian (TSDB) nội bộ của Prometheus.",
-        "Ngược lại với mô hình PUSH (như Zabbix hay Datadog agent), mô hình PULL giúp Prometheus kiểm soát được tải thu thập và dễ dàng phát hiện khi một mục tiêu bị chết (DOWN)."
+        "Dạ thưa Thầy/Cô, về Prometheus:\n\n"
+        "1. KHÁI NIỆM:\n"
+        "Prometheus là một hệ thống giám sát (Monitoring System) và cảnh báo mã nguồn mở, ban đầu được phát triển bởi SoundCloud và hiện là dự án tốt nghiệp thứ hai (sau Kubernetes) của tổ chức Cloud Native Computing Foundation (CNCF). Prometheus được thiết kế chuyên biệt để theo dõi độ tin cậy và hiệu năng của các hệ thống vi dịch vụ (Microservices) và Docker Containers.\n\n"
+        "2. TÁC DỤNG TRONG HỆ THỐNG:\n"
+        "- Thu thập số liệu hiệu năng (Metrics) theo thời gian thực từ phần cứng, hệ điều hành đến ứng dụng.\n"
+        "- Lưu trữ dữ liệu dạng chuỗi thời gian (Time-Series Database - TSDB) với tốc độ nén và truy xuất cực cao.\n"
+        "- Cung cấp ngôn ngữ truy vấn mạnh mẽ PromQL (Prometheus Query Language) để tính toán tỉ lệ tải (rate), giá trị trung bình, phần trăm (percentile), cộng dồn (sum).\n"
+        "- Hỗ trợ phát hiện lỗi và gửi cảnh báo (Alerting) khi hệ thống gặp sự cố (quá tải CPU, hết RAM, service bị sập).\n\n"
+        "3. CƠ CHẾ HOẠT ĐỘNG:\n"
+        "- Khám phá mục tiêu (Target Discovery): Prometheus đọc file cấu hình prometheus.yml để xác định danh sách các điểm cuối cần giám sát (Targets: web:3001, node_exporter:9100, cadvisor:8080, mysql_exporter:9104).\n"
+        "- Kéo dữ liệu định kỳ (PULL Mechanism): Cứ sau mỗi chu kỳ scrape_interval (10 giây), Prometheus chủ động gửi yêu cầu HTTP GET tới endpoint /metrics của từng Target để lấy dữ liệu.\n"
+        "- Xử lý & Lưu trữ: Dữ liệu nhận về được gắn nhãn (Labels: job, instance) và lưu trữ trực tiếp vào cơ sở dữ liệu chuỗi thời gian TSDB trên ổ cứng bền vững (Volume prom_data).\n"
+        "- Cung cấp API cho Grafana: Prometheus mở cổng 9090 để Grafana truy vấn dữ liệu bằng PromQL và vẽ biểu đồ trực quan.",
+        "Nhớ từ khóa: 'CNCF Project', 'Time-Series Database (TSDB)', 'PULL mechanism qua HTTP /metrics', 'Ngôn ngữ PromQL'."
     )
 
-    add_question(10, "Hệ thống của em đang giám sát những tầng nào và sử dụng những Exporter nào?")
+    add_question(10, "Grafana là gì? Tác dụng, khái niệm và cơ chế hoạt động của Grafana trong hệ thống?")
+    add_answer(
+        "Dạ thưa Thầy/Cô, về Grafana:\n\n"
+        "1. KHÁI NIỆM:\n"
+        "Grafana là nền tảng mã nguồn mở hàng đầu thế giới về Trực quan hóa dữ liệu (Data Visualization), Phân tích số liệu và Giám sát giao diện người dùng, được phát triển bởi Grafana Labs. Grafana biến các chuỗi số liệu thô phức tạp thành các bảng điều khiển (Dashboards) trực quan, sinh động và dễ hiểu đối với con người.\n\n"
+        "2. TÁC DỤNG TRONG HỆ THỐNG:\n"
+        "- Trực quan hóa đa dạng: Cung cấp hàng chục loại biểu đồ: Time Series (biểu đồ đường theo thời gian), Gauge (đồng hồ đo tốc độ/phần trăm), Stat (thẻ hiển thị số liệu lớn), Bar Chart, Heatmap, Bảng dữ liệu.\n"
+        "- Hợp nhất một màn hình duy nhất (Single Pane of Glass): Cho phép người quản trị vừa theo dõi chỉ số hiệu năng (Metrics từ Prometheus) vừa theo dõi nhật ký hoạt động (Logs từ Loki) trên cùng một giao diện duy nhất.\n"
+        "- Đa nguồn dữ liệu (Multi-DataSource): Grafana không tự lưu trữ dữ liệu mà kết nối linh hoạt tới nhiều Data Sources: Prometheus, Loki, MySQL, InfluxDB, Elasticsearch, CloudWatch...\n"
+        "- Tùy biến và Tương tác cao: Hỗ trợ lọc khoảng thời gian (now-5m, now-1h, now-24h), tự động làm mới (Auto-refresh 5s, 10s), phóng to thu nhỏ (Zoom-in/Zoom-out) các điểm bất thường trên đồ thị.\n\n"
+        "3. CƠ CHẾ HOẠT ĐỘNG:\n"
+        "- Kết nối Data Source: Người quản trị cấu hình nguồn cấp dữ liệu trong Grafana (Data Source Prometheus qua URL http://prometheus:9090 và Loki qua http://loki:3100).\n"
+        "- Gửi câu truy vấn: Khi người dùng mở Dashboard, mỗi Panel trong Grafana sẽ tự động gửi câu truy vấn tương ứng (PromQL tới Prometheus hoặc LogQL tới Loki) thông qua HTTP REST API nội bộ.\n"
+        "- Nhận dữ liệu & Render đồ họa: Máy chủ Prometheus/Loki xử lý tính toán và trả về kết quả JSON. Grafana tiếp nhận dữ liệu và vẽ biểu đồ dạng vector trên trình duyệt web của người dùng.\n"
+        "- Cập nhật chu kỳ: Nếu bật tính năng Auto-refresh, Grafana sẽ lặp lại quá trình truy vấn trên theo chu kỳ để biểu đồ dịch chuyển và nhảy số theo thời gian thực.",
+        "Nhớ từ khóa: 'Visualization Layer', 'Single Pane of Glass (hợp nhất Metrics và Logs)', 'Data Source agnostic (không tự lưu dữ liệu mà truy vấn từ nguồn)'."
+    )
+
+    add_question(11, "Prometheus hoạt động theo mô hình Pull hay Push? So sánh ưu điểm của mô hình Pull?")
+    add_answer(
+        "Prometheus hoạt động theo mô hình PULL (máy chủ chủ động kéo dữ liệu). Ưu điểm vượt trội của mô hình PULL so với PUSH:\n"
+        "1. Kiểm soát tải của Server: Prometheus tự quyết định thời điểm và tần suất cào dữ liệu (scrape_interval), không bao giờ bị nghẽn mạng do hàng nghìn client đồng loạt 'bắn' dữ liệu về máy chủ.\n"
+        "2. Dễ dàng phát hiện sự cố: Khi một ứng dụng hoặc Exporter bị sập (DOWN), Prometheus gửi request cào dữ liệu không thành công sẽ lập tức phát hiện và đánh dấu mục tiêu đó là DOWN ngay trên bảng điều khiển.\n"
+        "3. Kiến trúc đơn giản: Phía ứng dụng chỉ cần mở một cổng HTTP GET /metrics đơn giản, không cần cấu hình địa chỉ IP máy chủ giám sát phức tạp.",
+        "Nếu thầy cô hỏi 'Có trường hợp nào Prometheus dùng Push không?' -> Trả lời: Có, khi giám sát các tiến trình ngắn hạn (Batch jobs, Cron jobs), Prometheus sẽ dùng một thành phần phụ trợ gọi là Pushgateway."
+    )
+
+    add_question(12, "Hệ thống của em đang giám sát những tầng nào và sử dụng những Exporter nào?")
     add_answer(
         "Hệ thống giám sát toàn diện 4 tầng (Full-stack Observability):\n"
         "1. Tầng Máy chủ Host: Sử dụng node_exporter (cổng 9100) để đo CPU, RAM, Disk I/O, Network của hệ điều hành Ubuntu.\n"
@@ -368,7 +407,7 @@ def create_qa_document(output_path):
         "Mở trang http://192.168.241.128:9090/targets để khoe 5/5 targets đều màu xanh (UP)."
     )
 
-    add_question(11, "Em đã tự định nghĩa những Custom Metric (chỉ số nghiệp vụ) nào trong mã nguồn Node.js?")
+    add_question(13, "Em đã tự định nghĩa những Custom Metric (chỉ số nghiệp vụ) nào trong mã nguồn Node.js?")
     add_answer(
         "Trong web/index.js, em đã tự định nghĩa 3 custom metric quan trọng bằng thư viện prom-client:\n"
         "1. movie_tickets_booked_total (kiểu Counter): Đo tổng số vé đã bán, phân loại theo nhãn tên phim (movie_title) và loại ghế (seat_type).\n"
@@ -378,7 +417,7 @@ def create_qa_document(output_path):
         "Đây là điểm cộng xuất sắc vì đa số sinh viên chỉ lấy metric mặc định, còn bạn tự viết metric nghiệp vụ bán vé!"
     )
 
-    add_question(12, "Sự khác biệt giữa Counter và Gauge trong Prometheus là gì?")
+    add_question(14, "Sự khác biệt giữa Counter và Gauge trong Prometheus là gì?")
     add_answer(
         "Dạ thưa Thầy/Cô:\n"
         "- Counter: Là chỉ số chỉ có thể tăng lên hoặc reset về 0 khi tiến trình khởi động lại (không bao giờ giảm). Phù hợp để đo lường các đại lượng tích lũy như: tổng số vé đã bán, tổng số lượt request, tổng doanh thu.\n"
@@ -396,7 +435,7 @@ def create_qa_document(output_path):
     rg5.font.bold = True
     rg5.font.color.rgb = RGBColor(30, 41, 59)
 
-    add_question(13, "Tại sao em chọn Loki thay vì giải pháp ELK (Elasticsearch, Logstash, Kibana)?")
+    add_question(15, "Tại sao em chọn Loki thay vì giải pháp ELK (Elasticsearch, Logstash, Kibana)?")
     add_answer(
         "Em lựa chọn Loki (kiến trúc PLG: Promtail - Loki - Grafana) vì 3 ưu điểm vượt trội so với ELK:\n"
         "1. Tiết kiệm tài nguyên vượt bậc: Elasticsearch đánh chỉ mục toàn văn bản (full-text index), ngốn rất nhiều RAM (tối thiểu 4GB-8GB). Loki chỉ đánh chỉ mục cho các Nhãn (Labels: container_name, service), còn nội dung log được nén lại thành các khối nhỏ (chunks). Nhờ đó Loki chỉ tốn vài trăm MB RAM, chạy cực êm trên máy ảo sinh viên.\n"
@@ -405,13 +444,13 @@ def create_qa_document(output_path):
         "Nhấn mạnh từ khóa: 'Loki does not index the text, it only indexes metadata labels' (Loki không index văn bản mà chỉ index nhãn)."
     )
 
-    add_question(14, "Promtail thu thập log từ Docker như thế nào?")
+    add_question(16, "Promtail thu thập log từ Docker như thế nào?")
     add_answer(
         "Promtail được cấu hình mount volume trực tiếp vào Docker socket của máy chủ host tại đường dẫn /var/run/docker.sock. Nhờ cơ chế Docker SD (Service Discovery), Promtail tự động phát hiện tất cả container đang chạy, tự động lắng nghe luồng stdout và stderr của container, gắn nhãn metadata (như tên container, image, id), sau đó đóng gói và đẩy (Push) qua HTTP về máy chủ Loki ở cổng 3100.",
         "Chỉ file cấu hình monitoring/promtail-config.yml có khối docker_sd_configs."
     )
 
-    add_question(15, "Em hãy viết và giải thích 3 câu truy vấn LogQL để kiểm tra log hệ thống?")
+    add_question(17, "Em hãy viết và giải thích 3 câu truy vấn LogQL để kiểm tra log hệ thống?")
     add_answer(
         "Dạ thưa Thầy/Cô, 3 câu lệnh LogQL em sử dụng để vận hành hệ thống là:\n"
         "1. {container_name=\"movie_web\"}: Truy vấn toàn bộ log của ứng dụng web đặt vé Node.js theo thời gian thực.\n"
@@ -430,7 +469,7 @@ def create_qa_document(output_path):
     rg6.font.bold = True
     rg6.font.color.rgb = RGBColor(30, 41, 59)
 
-    add_question(16, "Hardening là gì? Em đã áp dụng những biện pháp Hardening cụ thể nào vào hệ thống này?")
+    add_question(18, "Hardening là gì? Em đã áp dụng những biện pháp Hardening cụ thể nào vào hệ thống này?")
     add_answer(
         "Hardening (Gia cố an ninh) là quá trình bảo vệ hệ thống bằng cách giảm thiểu bề mặt tấn công (attack surface) và loại bỏ các điểm yếu tiềm tàng. Em đã triển khai 4 biện pháp Hardening toàn diện:\n"
         "1. Cô lập mạng đa tầng (Network Segmentation): Tách hệ thống làm 2 mạng riêng biệt frontend_net và backend_net. MySQL hoàn toàn không mở cổng ra ngoài host.\n"
@@ -440,7 +479,7 @@ def create_qa_document(output_path):
         "Đây là nội dung ghi trọn 1.5 điểm của Tiêu chí 6."
     )
 
-    add_question(17, "Tại sao em chia làm 2 mạng frontend_net và backend_net? Lợi ích bảo mật là gì?")
+    add_question(19, "Tại sao em chia làm 2 mạng frontend_net và backend_net? Lợi ích bảo mật là gì?")
     add_answer(
         "Trong docker-compose.yml:\n"
         "- frontend_net: Chỉ chứa container Nginx và Web.\n"
@@ -449,14 +488,14 @@ def create_qa_document(output_path):
         "Có thể chạy lệnh 'sudo docker network inspect backend_net' để chứng minh Nginx không nằm trong mạng này!"
     )
 
-    add_question(18, "Tại sao em chọn thuật toán băm scrypt để lưu mật khẩu thay vì MD5 hay SHA-256 thông thường?")
+    add_question(20, "Tại sao em chọn thuật toán băm scrypt để lưu mật khẩu thay vì MD5 hay SHA-256 thông thường?")
     add_answer(
         "MD5 và SHA-256 là các thuật toán hàm băm thông điệp nhanh (Fast Hashes), được thiết kế để tính toán cực nhanh. Điều này khiến chúng trở nên cực kỳ nguy hiểm khi dùng lưu mật khẩu, vì hacker có thể dùng card đồ họa GPU hoặc máy đào ASIC để thử hàng tỷ mật khẩu mỗi giây (Brute-force).\n"
         "Ngược lại, scrypt là thuật toán Key Derivation Function có tính chất 'Memory-Hard' (đòi hỏi tiêu tốn nhiều bộ nhớ RAM khi tính toán). Kẻ tấn công không thể tận dụng sức mạnh tính toán song song của GPU để bẻ khóa hàng loạt. Kết hợp với Salt ngẫu nhiên 16 bytes, mỗi mật khẩu sinh ra một chuỗi băm độc nhất, vô hiệu hóa hoàn toàn phương pháp tấn công bằng Bảng Cầu Vồng (Rainbow Table).",
         "Thầy cô dạy môn An toàn thông tin nghe câu này sẽ cho điểm tuyệt đối!"
     )
 
-    add_question(19, "Tại sao phải ký số HMAC-SHA256 cho Cookie phiên làm việc (Session Cookie)?")
+    add_question(21, "Tại sao phải ký số HMAC-SHA256 cho Cookie phiên làm việc (Session Cookie)?")
     add_answer(
         "Nếu cookie lưu thông tin người dùng ở dạng thông thường (như {username: 'admin'}), kẻ tấn công có thể dễ dàng sửa giá trị cookie trên trình duyệt của họ để mạo danh tài khoản Quản trị viên (Privilege Escalation).\n"
         "Bằng việc sử dụng HMAC-SHA256 với một khóa bí mật (SESSION_SECRET) chỉ có máy chủ biết, mỗi khi client gửi cookie lên, máy chủ sẽ băm lại dữ liệu và so sánh với chữ ký đính kèm. Nếu kẻ tấn công tự ý sửa dù chỉ 1 ký tự, chữ ký sẽ không khớp và phiên đăng nhập bị hủy ngay lập tức.",
@@ -473,7 +512,7 @@ def create_qa_document(output_path):
     rg7.font.bold = True
     rg7.font.color.rgb = RGBColor(30, 41, 59)
 
-    add_question(20, "Nếu trang web bất ngờ bị chậm hoặc sập, em sẽ dùng các công cụ đã cài đặt để điều tra và xử lý theo các bước nào?")
+    add_question(22, "Nếu trang web bất ngờ bị chậm hoặc sập, em sẽ dùng các công cụ đã cài đặt để điều tra và xử lý theo các bước nào?")
     add_answer(
         "Em áp dụng quy trình 3 bước chuẩn SRE (Site Reliability Engineering):\n"
         "- Bước 1 (Triệu chứng - Metrics): Mở Grafana xem biểu đồ CPU/RAM của Host và Containers. Xem CPU có bị 100% không? MySQL có bị nghẽn số lượng kết nối (Threads Connected) không? Metric nào đang tăng đột biến?\n"
@@ -482,7 +521,7 @@ def create_qa_document(output_path):
         "Câu trả lời này thể hiện tư duy kỹ sư vận hành hệ thống chuyên nghiệp."
     )
 
-    add_question(21, "Dữ liệu của MySQL, Prometheus, Grafana có bị mất khi khởi động lại máy ảo hoặc tắt container không? Tại sao?")
+    add_question(23, "Dữ liệu của MySQL, Prometheus, Grafana có bị mất khi khởi động lại máy ảo hoặc tắt container không? Tại sao?")
     add_answer(
         "Dạ không bị mất. Vì toàn bộ dữ liệu quan trọng đều được gắn kết qua Docker Named Volumes có tính năng lưu trữ bền vững (Persistent Storage). Trong docker-compose.yml em đã cấu hình:\n"
         "- mysql_data: Lưu trữ toàn bộ database MySQL tại /var/lib/mysql.\n"
@@ -493,7 +532,7 @@ def create_qa_document(output_path):
         "Có thể chạy 'docker volume ls' để chỉ ra các volume này."
     )
 
-    add_question(22, "Khi cập nhật mã nguồn mới từ Git trên máy ảo Ubuntu, em thực hiện những lệnh nào?")
+    add_question(24, "Khi cập nhật mã nguồn mới từ Git trên máy ảo Ubuntu, em thực hiện những lệnh nào?")
     add_answer(
         "Quy trình cập nhật mã nguồn gồm 3 bước chuẩn:\n"
         "1. git pull origin main: Kéo các thay đổi mã nguồn mới nhất từ GitHub về thư mục dự án.\n"
@@ -502,7 +541,7 @@ def create_qa_document(output_path):
         "Ghi nhớ 3 lệnh này nếu thầy cô bảo kéo code mới hoặc sửa code trực tiếp tại chỗ."
     )
 
-    add_question(23, "Làm thế nào để sao lưu (Backup) cơ sở dữ liệu MySQL định kỳ trong môi trường Docker?")
+    add_question(25, "Làm thế nào để sao lưu (Backup) cơ sở dữ liệu MySQL định kỳ trong môi trường Docker?")
     add_answer(
         "Có thể sử dụng công cụ mysqldump chạy trực tiếp thông qua Docker Exec:\n"
         "sudo docker exec movie_mysql mysqldump -u root -prootpassword moviedb > backup_$(date +%F).sql\n"
@@ -510,13 +549,13 @@ def create_qa_document(output_path):
         "Thầy cô chấm điểm rất thích những ý tưởng tự động hóa sao lưu dự phòng (Disaster Recovery)."
     )
 
-    add_question(24, "Tại sao khi truy cập trang web bằng IP máy ảo, các ảnh poster phim HD vẫn tải về bình thường mà không bị lỗi?")
+    add_question(26, "Tại sao khi truy cập trang web bằng IP máy ảo, các ảnh poster phim HD vẫn tải về bình thường mà không bị lỗi?")
     add_answer(
         "Vì hệ thống lưu trữ đường dẫn ảnh trực tiếp từ CDN toàn cầu của TMDB (image.tmdb.org) với độ phân giải chuẩn w500. Trình duyệt của máy client khi render HTML sẽ tải trực tiếp poster từ CDN này. Riêng phần dữ liệu text phim đã được hệ thống seed sẵn vào MySQL ngay khi container web khởi chạy lần đầu tiên, đảm bảo trang web hoạt động độc lập và ổn định tuyệt đối ngay cả khi mạng quốc tế có độ trễ.",
         "Chứng minh: 8 bộ phim rạp thật với đầy đủ poster HD sắc nét trên trang chủ."
     )
 
-    add_question(25, "Theo em, nếu hệ thống này được triển khai lên Production thực tế cho hàng triệu người dùng, em sẽ nâng cấp thêm những gì?")
+    add_question(27, "Theo em, nếu hệ thống này được triển khai lên Production thực tế cho hàng triệu người dùng, em sẽ nâng cấp thêm những gì?")
     add_answer(
         "Em sẽ thực hiện 4 nâng cấp quan trọng:\n"
         "1. Chuyển sang Kubernetes (K8s): Thay thế Docker Compose bằng cụm K8s với Horizontal Pod Autoscaler (HPA) để tự động co giãn số lượng Pod theo lưu lượng người dùng.\n"
@@ -533,11 +572,11 @@ def create_qa_document(output_path):
 if __name__ == '__main__':
     project_dir = r"C:\Users\tqpxc\Downloads\movie-system-v4\movie-system"
     target_path = os.path.join(project_dir, "TAI_LIEU_VAN_DAP_DO_AN.docx")
-    desktop_path = r"C:\Users\tqpxc\Desktop\TAI_LIEU_VAN_DAP_DO_AN.docx"
+    downloads_path = r"C:\Users\tqpxc\Downloads\TAI_LIEU_VAN_DAP_DO_AN.docx"
 
     create_qa_document(target_path)
     try:
-        shutil.copyfile(target_path, desktop_path)
-        print(f"Copied to Desktop at: {desktop_path}")
+        shutil.copyfile(target_path, downloads_path)
+        print(f"Copied to Downloads at: {downloads_path}")
     except Exception as e:
-        print(f"Could not copy to Desktop: {e}")
+        print(f"Could not copy to Downloads: {e}")
