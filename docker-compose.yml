@@ -136,6 +136,7 @@ services:
   loki:
     image: grafana/loki:latest
     container_name: movie_loki
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "3100:3100"
