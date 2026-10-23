@@ -1,0 +1,14 @@
+{
+  "name": "movie-ticket-web",
+  "version": "2.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "mysql2": "^3.9.2",
+    "prom-client": "^15.1.0"
+  }
+}

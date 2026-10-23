@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="vi"><head><title>Đăng nhập – CineMaster</title><%- include('_head') %></head>
+<body class="flex items-center justify-center p-4">
+<div class="glass rounded-3xl p-8 w-full max-w-sm fade">
+  <a href="/" class="block text-center text-lg font-black neon mb-1"><i class="fa-solid fa-film mr-2"></i>CINEMASTER</a>
+  <h1 class="text-center text-2xl font-black mb-6">Đăng nhập</h1>
+  <% if (error) { %><div class="bg-rose-500/15 text-rose-300 border border-rose-500/30 rounded-xl p-2.5 text-xs text-center mb-4"><%= error %></div><% } %>
+  <form action="/login" method="POST" class="space-y-4">
+    
+    <input class="inp" name="username" placeholder="Tên đăng nhập" required autocomplete="username">
+    <input class="inp" type="password" name="password" placeholder="Mật khẩu" required autocomplete="current-password">
+    <button class="btn w-full">Đăng nhập</button>
+  </form>
+  <p class="text-xs text-slate-400 text-center mt-5">Chưa có tài khoản? <a class="text-violet-300" href="/register">Đăng ký</a><br><span class="text-slate-500">Demo: khachhang/123456 · admin/admin123</span></p>
+</div></body></html>

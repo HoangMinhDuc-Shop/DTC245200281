@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="vi"><head><title>Vé của bạn – CineMaster</title><%- include('_head') %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>.notch{position:relative;border-top:2px dashed rgba(255,255,255,.18);margin:0 -1.5rem}
+.notch:before,.notch:after{content:"";position:absolute;top:-13px;width:24px;height:24px;border-radius:50%;background:#070812}
+.notch:before{left:-12px}.notch:after{right:-12px}
+@media print{body{background:#fff}.no-print{display:none}}</style></head>
+<body class="flex items-center justify-center p-4">
+<div class="w-full max-w-sm fade">
+  <div class="text-center mb-5"><div class="w-14 h-14 mx-auto rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/40 flex items-center justify-center text-xl mb-2"><i class="fa-solid fa-check"></i></div>
+  <h1 class="text-2xl font-black neon">ĐẶT VÉ THÀNH CÔNG</h1></div>
+  <div class="glass rounded-3xl overflow-hidden shadow-2xl shadow-violet-900/30">
+    <div class="bg-gradient-to-r from-violet-600 to-rose-600 p-5 text-center">
+      <div class="text-[10px] tracking-[.3em] text-white/70">E-TICKET</div>
+      <h2 class="text-xl font-black mt-1"><%= movie_title %></h2>
+      <div class="text-xs text-white/80 mt-1"><i class="fa-regular fa-clock mr-1"></i><%= showtime %></div>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div><div class="text-[11px] text-slate-400">Ghế</div><b class="text-amber-300"><%= seats %></b></div>
+        <div><div class="text-[11px] text-slate-400">Tổng tiền</div><b class="text-emerald-300"><%= total_price %></b></div>
+        <div><div class="text-[11px] text-slate-400">Mã vé</div><b class="font-mono tracking-wider"><%= bookingCode %></b></div>
+        <div><div class="text-[11px] text-slate-400">Trạng thái</div><b class="text-emerald-300">Đã thanh toán</b></div>
+      </div>
+      <div class="notch"></div>
+      <div class="text-center pt-2"><div id="qr" class="inline-block p-3 bg-white rounded-2xl"></div>
+      <div class="text-[11px] text-slate-500 mt-2">Đưa mã QR cho nhân viên tại cổng soát vé</div></div>
+    </div>
+    <div class="no-print p-4 flex gap-3 border-t border-white/10">
+      <button onclick="print()" class="flex-1 glass rounded-full py-2.5 text-xs font-bold">In vé</button>
+      <a href="/" class="flex-1 btn text-xs">Đặt vé khác</a>
+    </div>
+  </div>
+</div>
+<script>new QRCode(document.getElementById('qr'),{text:'<%= bookingCode %>',width:150,height:150});</script>
+</body></html>

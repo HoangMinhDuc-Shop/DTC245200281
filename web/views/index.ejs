@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CineMaster – Đặt vé thế hệ mới</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Be Vietnam Pro',sans-serif;background:#05060d}
+.glass{background:rgba(255,255,255,.05);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1)}
+.neon{background:linear-gradient(90deg,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;color:transparent}
+.card{transform-style:preserve-3d;transition:transform .15s,box-shadow .3s}
+.card:hover{box-shadow:0 20px 60px -15px rgba(167,139,250,.55)}
+.screen{height:50px;width:80%;margin:0 auto 28px;border-top:3px solid #22d3ee;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(#22d3ee33,transparent);box-shadow:0 -12px 40px #22d3ee66}
+.seat{width:32px;height:30px;border-radius:9px 9px 4px 4px;font-size:10px;transition:.15s}
+.seat.std{background:#1e2235;border:1px solid #343a5a}
+.seat.vip{background:#3b2a0a;border:1px solid #f59e0b;color:#fbbf24}
+.seat.sel{background:#a78bfa!important;border-color:#c4b5fd!important;color:#fff!important;box-shadow:0 0 14px #a78bfa}
+.seat.occ{background:#111;border-color:#222;color:#444;cursor:not-allowed}
+.seat:not(.occ):hover{transform:translateY(-3px)}
+.fade{animation:f .8s both}@keyframes f{from{opacity:0;transform:translateY(20px)}}
+</style>
+</head>
+<body class="text-slate-100 min-h-screen">
+<% const hue = t => [...t].reduce((a,c)=>a+c.charCodeAt(0),0)%360; const hero = movies[0]; %>
+<nav class="glass fixed top-0 inset-x-0 z-40 px-6 py-3 flex justify-between items-center">
+  <a href="/" class="text-xl font-black neon"><i class="fa-solid fa-film mr-2"></i>CINEMASTER</a>
+  <div class="flex items-center gap-4 text-sm">
+    <a href="/checkin" class="hover:text-cyan-300"><i class="fa-solid fa-qrcode mr-1"></i>Soát vé</a>
+    <% if (user) { %>
+      <% if (user.role==='admin') { %><a href="/admin" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400/15 text-amber-300 border border-amber-400/30">Admin</a><% } %>
+      <span class="hidden sm:inline text-slate-300"><%= user.fullname %></span>
+      <a href="/logout" class="text-rose-400 text-xs">Thoát</a>
+    <% } else { %><a href="/login" class="px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-violet-500 to-rose-500">Đăng nhập</a><% } %>
+  </div>
+</nav>
+
+<% if (hero) { %>
+<header class="relative h-[78vh] min-h-[520px] flex items-end overflow-hidden"
+  style="<%= hero.backdrop ? `background:url('${hero.backdrop}') center/cover` : `background:linear-gradient(135deg,hsl(${hue(hero.title)} 70% 25%),#05060d)` %>">
+  <div class="absolute inset-0 bg-gradient-to-t from-[#05060d] via-[#05060d]/60 to-transparent"></div>
+  <div class="absolute inset-0 bg-gradient-to-r from-[#05060d]/90 to-transparent"></div>
+  <div class="relative max-w-6xl mx-auto px-6 pb-16 w-full fade">
+    <span class="glass px-3 py-1 rounded-full text-xs text-cyan-300"><i class="fa-solid fa-bolt mr-1"></i>ĐANG HOT · <%= hero.genre %></span>
+    <h1 class="text-4xl md:text-7xl font-black mt-4 max-w-3xl leading-tight"><%= hero.title %></h1>
+    <p class="text-slate-300 mt-4 max-w-xl line-clamp-3 text-sm md:text-base"><%= hero.overview %></p>
+    <div class="flex items-center gap-4 mt-7">
+      <button class="book px-7 py-3 rounded-full font-bold bg-gradient-to-r from-violet-500 to-rose-500 shadow-lg shadow-violet-500/30 hover:scale-105 transition" data-title="<%= hero.title %>" data-price="<%= hero.price %>"><i class="fa-solid fa-ticket mr-2"></i>Đặt vé ngay</button>
+      <span class="text-amber-300 font-bold"><%= hero.rating %></span>
+    </div>
+  </div>
+</header>
+<% } %>
+
+<main class="max-w-6xl mx-auto px-6 py-14">
+  <h2 class="text-2xl font-black mb-8"><span class="neon">PHIM ĐANG CHIẾU</span></h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-6" style="perspective:1000px">
+    <% movies.forEach(m => { %>
+    <div class="card glass rounded-2xl overflow-hidden flex flex-col">
+      <div class="relative aspect-[2/3]" style="<%= m.poster ? '' : `background:linear-gradient(160deg,hsl(${hue(m.title)} 75% 40%),hsl(${(hue(m.title)+60)%360} 70% 12%))` %>">
+        <% if (m.poster) { %><img src="<%= m.poster %>" alt="<%= m.title %>" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
+        <% } else { %><div class="absolute inset-0 p-4 flex items-end font-black text-xl leading-tight"><%= m.title %></div><% } %>
+        <span class="absolute top-3 right-3 glass px-2 py-0.5 rounded-full text-xs text-amber-300 font-bold"><%= m.rating %></span>
+      </div>
+      <div class="p-4 flex-1 flex flex-col justify-between gap-3">
+        <div><div class="text-[11px] text-cyan-300"><%= m.genre %></div><h3 class="font-bold leading-snug mt-1 line-clamp-2"><%= m.title %></h3></div>
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-amber-300 text-sm"><%= Number(m.price).toLocaleString('vi-VN') %>đ</span>
+          <button class="book px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-violet-500 transition" data-title="<%= m.title %>" data-price="<%= m.price %>">Chọn ghế</button>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+</main>
+
+<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+  <div class="glass bg-[#0b0d1a]/90 w-full max-w-xl rounded-3xl p-6 fade">
+    <div class="flex justify-between items-center mb-4"><h3 id="mTitle" class="font-black text-lg"></h3><button id="close" class="text-2xl text-slate-400 hover:text-white">&times;</button></div>
+    <form action="/book" method="POST">
+      <input type="hidden" name="movie_title" id="fMovie"><input type="hidden" name="seats" id="fSeats"><input type="hidden" name="total_price" id="fTotal">
+      <select name="showtime" id="show" class="w-full mb-6 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm">
+        <option>18:30 - Rạp 1 (IMAX)</option><option>20:45 - Rạp 1 (IMAX)</option><option>22:30 - Rạp 2 (2D)</option>
+      </select>
+      <div class="screen"></div><div class="text-center text-[10px] text-cyan-300/60 -mt-5 mb-5 tracking-[.4em]">MÀN HÌNH</div>
+      <div id="grid" class="flex flex-col gap-2 items-center mb-5"></div>
+      <div class="flex justify-center gap-4 text-[11px] text-slate-400 mb-5">
+        <span><i class="fa-solid fa-square text-[#343a5a]"></i> Thường</span><span><i class="fa-solid fa-square text-amber-500"></i> VIP +20k</span>
+        <span><i class="fa-solid fa-square text-violet-400"></i> Đang chọn</span><span><i class="fa-solid fa-square text-neutral-700"></i> Đã bán</span>
+      </div>
+      <div class="flex justify-between items-center p-4 rounded-2xl bg-black/40 border border-white/10">
+        <div><div class="text-xs text-slate-400">Ghế: <b id="sTxt" class="text-white">Chưa chọn</b></div><div class="text-xl font-black neon"><span id="pTxt">0</span>đ</div></div>
+        <% if (user) { %><button id="go" disabled class="px-6 py-2.5 rounded-full font-bold bg-gradient-to-r from-violet-500 to-rose-500 disabled:opacity-30">Thanh toán</button>
+        <% } else { %><a href="/login" class="px-5 py-2.5 rounded-full font-bold text-xs bg-amber-500">Đăng nhập để đặt vé</a><% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ROWS=['A','B','C','D','E'], PER=8; let movie='', base=0, sel=[], poll;
+// Dựng sơ đồ ghế: A-C thường, D-E VIP, có lối đi giữa
+$('grid').innerHTML=ROWS.map((r,i)=>`<div class="flex gap-1.5 items-center"><span class="w-4 text-[10px] text-slate-500">${r}</span>`+
+ Array.from({length:PER},(_,n)=>{const vip=i>2,code=r+(n+1)+(vip?'-VIP':'');
+  return `<button type="button" data-c="${code}" data-v="${vip?1:0}" class="seat ${vip?'vip':'std'} ${n==3?'mr-5':''}">${n+1}</button>`}).join('')+`</div>`).join('');
+async function refresh(){
+  const d=await (await fetch(`/api/occupied-seats?movie=${encodeURIComponent(movie)}&showtime=${encodeURIComponent($('show').value)}`)).json();
+  document.querySelectorAll('.seat').forEach(s=>{const o=d.occupied.includes(s.dataset.c);s.classList.toggle('occ',o);
+    if(o){s.classList.remove('sel');sel=sel.filter(x=>x.c!==s.dataset.c)}});
+  render();
+}
+function render(){
+  const t=sel.reduce((a,s)=>a+base+(s.v?20000:0),0);
+  $('sTxt').textContent=sel.map(s=>s.c).join(', ')||'Chưa chọn'; $('pTxt').textContent=t.toLocaleString('vi-VN');
+  $('fSeats').value=sel.map(s=>s.c).join(', '); $('fTotal').value=t; if($('go'))$('go').disabled=!sel.length;
+}
+$('grid').onclick=e=>{const s=e.target.closest('.seat');if(!s||s.classList.contains('occ'))return;
+  const c=s.dataset.c,i=sel.findIndex(x=>x.c===c);
+  i>-1?sel.splice(i,1):sel.push({c,v:+s.dataset.v}); s.classList.toggle('sel',i<0); render()};
+document.querySelectorAll('.book').forEach(b=>b.onclick=()=>{
+  movie=b.dataset.title;base=+b.dataset.price;sel=[];$('mTitle').textContent=movie;$('fMovie').value=movie;
+  document.querySelectorAll('.seat').forEach(s=>s.classList.remove('sel'));
+  $('modal').classList.replace('hidden','flex'); refresh(); poll=setInterval(refresh,4000)}); // ghế cập nhật real-time
+$('show').onchange=()=>{sel=[];document.querySelectorAll('.seat').forEach(s=>s.classList.remove('sel'));refresh()};
+$('close').onclick=()=>{$('modal').classList.replace('flex','hidden');clearInterval(poll)};
+// Hiệu ứng nghiêng 3D theo chuột
+document.querySelectorAll('.card').forEach(c=>{
+  c.onmousemove=e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    c.style.transform=`rotateY(${x*12}deg) rotateX(${-y*12}deg) translateZ(8px)`};
+  c.onmouseleave=()=>c.style.transform=''});
+</script>
+</body>
+</html>

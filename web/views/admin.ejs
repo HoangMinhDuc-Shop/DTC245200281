@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="vi"><head><title>Quản trị – CineMaster</title><%- include('_head') %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script></head>
+<body class="p-6">
+<div class="max-w-6xl mx-auto fade">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-black neon"><i class="fa-solid fa-chart-line mr-2"></i>DASHBOARD</h1>
+    <div class="flex gap-4 text-sm"><a href="/checkin" class="text-cyan-300"><i class="fa-solid fa-qrcode mr-1"></i>Soát vé</a><a href="/" class="text-slate-400">Trang chủ</a></div>
+  </div>
+  <% const rate = s.n ? Math.round(s.used / s.n * 100) : 0; %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <% [['Doanh thu', Number(s.rev).toLocaleString('vi-VN') + 'đ', 'emerald'], ['Đơn đặt vé', s.n, 'violet'], ['Đã vào rạp', s.used, 'cyan'], ['Tỉ lệ soát vé', rate + '%', 'amber']].forEach(k => { %>
+      <div class="glass rounded-2xl p-5"><div class="text-[11px] uppercase text-slate-400"><%= k[0] %></div><div class="text-2xl font-black text-<%= k[2] %>-300 mt-1"><%= k[1] %></div></div>
+    <% }) %>
+  </div>
+  <div class="grid lg:grid-cols-3 gap-4 mb-6">
+    <div class="glass rounded-2xl p-5 lg:col-span-2"><div class="text-sm font-bold mb-3">Doanh thu 7 ngày</div><canvas id="c1" height="110"></canvas></div>
+    <div class="glass rounded-2xl p-5"><div class="text-sm font-bold mb-3">Theo phim</div><canvas id="c2"></canvas></div>
+  </div>
+  <div class="glass rounded-2xl overflow-x-auto">
+    <div class="p-4 font-bold text-sm border-b border-white/10">Vé gần đây</div>
+    <table class="w-full text-xs text-left">
+      <thead class="text-slate-400"><tr><% ['Mã vé','Khách','Phim','Suất','Ghế','Tiền','Trạng thái'].forEach(h => { %><th class="p-3"><%= h %></th><% }) %></tr></thead>
+      <tbody class="divide-y divide-white/5">
+      <% orders.forEach(o => { %><tr>
+        <td class="p-3 font-mono font-bold text-amber-300"><%= o.booking_code %></td><td class="p-3"><%= o.username %></td>
+        <td class="p-3 font-semibold"><%= o.movie_title %></td><td class="p-3 text-slate-400"><%= o.showtime %></td>
+        <td class="p-3 text-rose-300 font-bold"><%= o.seats %></td><td class="p-3 text-emerald-300 font-bold"><%= Number(o.total_price).toLocaleString('vi-VN') %>đ</td>
+        <td class="p-3"><span class="px-2 py-0.5 rounded-full <%= o.status==='USED' ? 'bg-white/10 text-slate-300' : 'bg-emerald-400/15 text-emerald-300' %>"><%= o.status==='USED' ? 'Đã vào rạp' : 'Đã thanh toán' %></span></td></tr><% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+const day=<%- JSON.stringify(byDay.map(r => ({d: r.d, v: Number(r.rev)}))) %>, mv=<%- JSON.stringify(byMovie.map(r => ({t: r.t, v: Number(r.rev)}))) %>;
+Chart.defaults.color='#94a3b8'; Chart.defaults.borderColor='rgba(255,255,255,.06)';
+new Chart(c1,{type:'line',data:{labels:day.map(x=>x.d),datasets:[{data:day.map(x=>x.v),borderColor:'#a78bfa',backgroundColor:'#a78bfa22',fill:true,tension:.4,pointRadius:4}]},options:{plugins:{legend:{display:false}}}});
+new Chart(c2,{type:'doughnut',data:{labels:mv.map(x=>x.t),datasets:[{data:mv.map(x=>x.v),backgroundColor:['#8b5cf6','#f43f5e','#22d3ee','#f59e0b','#10b981','#64748b'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:10}}}}});
+</script>
+</body></html>
