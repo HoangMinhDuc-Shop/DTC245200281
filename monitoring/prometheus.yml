@@ -2,18 +2,27 @@ global:
   scrape_interval: 10s
 
 scrape_configs:
+  # 1. Giám sát Ứng dụng Web NodeJS (Metrics kinh doanh + HTTP)
   - job_name: 'movie_web'
     static_configs:
       - targets: ['web:3001']
 
+  # 2. Giám sát Cơ sở dữ liệu MySQL
   - job_name: 'mysql_db'
     static_configs:
       - targets: ['mysql_exporter:9104']
 
+  # 3. Giám sát Hệ điều hành Ubuntu (CPU, RAM, Disk)
   - job_name: 'ubuntu_node'
     static_configs:
       - targets: ['node_exporter:9100']
 
+  # 4. Giám sát Các Container Docker (CPU, RAM per container)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # 5. Giám sát Máy chủ Prometheus
   - job_name: 'prometheus'
     static_configs:
       - targets: ['prometheus:9090']

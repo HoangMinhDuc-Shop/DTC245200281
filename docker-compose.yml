@@ -1,4 +1,5 @@
 services:
+  # 1. Nginx Reverse Proxy (Tiêu chí 3 & 6: Security Headers)
   nginx:
     image: nginx:alpine
     container_name: movie_nginx
@@ -7,9 +8,12 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - frontend_net
     depends_on:
       - web
 
+  # 2. Database MySQL (Tiêu chí 6: Network Isolation - chỉ nằm trong backend_net)
   mysql:
     image: mysql:8.0
     container_name: mysql_db
@@ -17,11 +21,12 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: moviedb
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - backend_net
 
+  # 3. Quản trị CSDL phpMyAdmin (Tiêu chí 2)
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: movie_phpmyadmin
@@ -33,9 +38,13 @@ services:
       PMA_PORT: 3306
       PMA_USER: root
       PMA_PASSWORD: rootpassword
+    networks:
+      - frontend_net
+      - backend_net
     depends_on:
       - mysql
 
+  # 4. Giám sát Database: MySQL Exporter
   mysql_exporter:
     image: prom/mysqld-exporter:latest
     container_name: mysql_exporter
@@ -44,16 +53,33 @@ services:
       - ./.my.cnf:/etc/.my.cnf:ro
     command:
       - '--config.my-cnf=/etc/.my.cnf'
+    networks:
+      - backend_net
     depends_on:
       - mysql
 
+  # 5. Giám sát Hệ điều hành Ubuntu: Node Exporter
   node_exporter:
     image: prom/node-exporter:latest
     container_name: node_exporter
     restart: unless-stopped
-    ports:
-      - "9100:9100"
+    networks:
+      - backend_net
 
+  # 6. Giám sát Container Docker: cAdvisor (Tiêu chí 4)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: movie_cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - backend_net
+
+  # 7. Ứng dụng Web NodeJS (Tiêu chí 6: Non-root user)
   web:
     build: ./web
     container_name: movie_web
@@ -68,9 +94,13 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
+    networks:
+      - frontend_net
+      - backend_net
     depends_on:
       - mysql
 
+  # 8. Hệ thống Giám sát: Prometheus
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -80,7 +110,11 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prom_data:/prometheus
+    networks:
+      - frontend_net
+      - backend_net
 
+  # 9. Dashboard Giám sát: Grafana
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -92,10 +126,50 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - frontend_net
+      - backend_net
     depends_on:
       - prometheus
+
+  # 10. Hệ thống Log tập trung: Loki (Tiêu chí 5)
+  loki:
+    image: grafana/loki:latest
+    container_name: movie_loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/tmp/loki
+    networks:
+      - frontend_net
+      - backend_net
+
+  # 11. Thu thập Log Docker: Promtail (Tiêu chí 5)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: movie_promtail
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+    networks:
+      - backend_net
+    depends_on:
+      - loki
+
+# --- TIÊU CHÍ 6: HARDENING & NETWORK ISOLATION ---
+networks:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
 
 volumes:
   mysql_data:
   grafana_data:
   prom_data:
+  loki_data:

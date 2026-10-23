@@ -1,6 +1,6 @@
-# CINEMASTER - HỆ THỐNG ĐẶT VÉ XEM PHIM & GIÁM SÁT DEVOPS TOÀN DIỆN
+# CINEMASTER - HỆ THỐNG ĐẶT VÉ PHIM & GIÁM SÁT DEVOPS TOÀN DIỆN
 
-Hệ thống ứng dụng web đặt vé xem phim trực tuyến hiện đại, tích hợp cơ sở dữ liệu MySQL, giao diện quản trị phpMyAdmin và hệ thống giám sát toàn diện chuẩn DevOps sử dụng Prometheus & Grafana trên nền tảng Docker & Ubuntu.
+Hệ thống ứng dụng web đặt vé xem phim trực tuyến hiện đại, tích hợp cơ sở dữ liệu MySQL, giao diện quản trị phpMyAdmin, hệ thống giám sát Prometheus/Grafana, hệ thống ghi log tập trung Loki/Promtail và áp dụng các tiêu chuẩn Hardening bảo mật nâng cao.
 
 ---
 
@@ -11,7 +11,7 @@ Hệ thống ứng dụng web đặt vé xem phim trực tuyến hiện đại, 
                                                   │
                                          Port 80  ▼
                            ┌──────────────────────────────────────────────┐
-                           │            Nginx (Reverse Proxy)             │
+                           │       Nginx (Reverse Proxy + Hardening)      │
                            └──────────────────────┬───────────────────────┘
                                                   │
                   ┌───────────────────────────────┼───────────────────────────────┐
@@ -19,126 +19,107 @@ Hệ thống ứng dụng web đặt vé xem phim trực tuyến hiện đại, 
                   ▼                               ▼                               ▼
        ┌─────────────────────┐         ┌─────────────────────┐         ┌─────────────────────┐
        │   NodeJS Web App    │         │     phpMyAdmin      │         │  Grafana Dashboard  │
-       │ (Auth, Booking, EJS)│         │(Quản lý CSDL Web UI)│         │(Trực quan hóa số liệu)
+       │ (Auth, Booking, EJS)│         │(Quản lý CSDL Web UI)│         │ (Giám sát & Logs)   │
        └──────────┬──────────┘         └──────────┬──────────┘         └──────────▲──────────┘
-                  │                               │                               │ Query
+                  │                               │                               │ Query PromQL/LogQL
                   └───────────────┬───────────────┘                               │
-                                  ▼ Port 3306                                     │
-                       ┌─────────────────────┐                         ┌──────────┴──────────┐
-                       │   MySQL Database    │◄── mysqld_exporter ─────┤     Prometheus      │
-                       │(Users, Orders, Seats)│       (Port 9104)      │  (Thu thập Metrics) │
-                       └─────────────────────┘                         └──────────▲──────────┘
-                                                                                  │
-                               Ubuntu Host OS ─────── node_exporter ──────────────┘
-                                                      (Port 9100)
+                                  ▼ Port 3306                         ┌───────────┴───────────┐
+                       ┌─────────────────────┐                        │ Prometheus  │  Loki   │
+                       │   MySQL Database    │                        │  (Metrics)  │ (Logs)  │
+                       │(Users, Orders, Seats)│                        └─────▲───────┴────▲────┘
+                       └─────────────────────┘                              │            │
+                                  ▲                                         │            │
+                                  ├────── mysqld_exporter (9104) ───────────┤            │
+                                  ├────── node_exporter   (9100) ───────────┤            │
+                                  ├────── cadvisor        (8080) ───────────┘            │
+                                  └────── promtail (/var/run/docker.sock) ───────────────┘
 ```
 
 ---
 
-## 🚀 2. Bảng Danh Sách Dịch Vụ & Cổng Truy Cập (Port Mapping)
+## 📋 2. Bảng Danh Sách Dịch Vụ & Cổng Truy Cập (Port Mapping)
 
 | Dịch vụ | Cổng (Port) | Chức năng | Tài khoản mặc định |
 | :--- | :--- | :--- | :--- |
-| **Web Ứng Dụng** | `80` (hoặc `3001`) | Giao diện đặt vé phim, chọn ghế, xuất vé QR | `khachhang` / `123456` |
+| **Web Ứng Dụng** | `80` (hoặc `3001`) | Đặt vé xem phim, chọn ghế, xuất vé QR | `khachhang` / `123456` |
 | **Admin Portal** | `80/admin` | Quản trị doanh thu, danh sách đơn hàng | `admin` / `admin123` |
 | **Cổng Soát Vé** | `80/checkin` | Soát vé QR tại cổng rạp phim | Không cần đăng nhập |
 | **phpMyAdmin** | `8080` | Giao diện quản lý CSDL MySQL trực quan | `root` / `rootpassword` |
-| **Grafana** | `3000` | Dashboard giám sát CPU, RAM, MySQL, Doanh thu | `admin` / `admin` |
+| **Grafana** | `3000` | Dashboard giám sát Metrics & Logs | `admin` / `admin` |
+| **Loki** | `3100` | Máy chủ lưu trữ và xử lý Log tập trung | Không cần đăng nhập |
 | **Prometheus** | `9090` | Thu thập và lưu trữ time-series metrics | Không cần đăng nhập |
 | **MySQL Server** | `3306` | Hệ quản trị cơ sở dữ liệu quan hệ | `root` / `rootpassword` |
 
 ---
 
-## 🛠 3. Hướng Dẫn Cài Đặt & Khởi Chạy (Quick Start)
+## 🛡 3. Báo Cáo Hardening Bảo Mật (Tiêu Chí 6)
 
-### Yêu cầu tiên quyết:
-* Hệ điều hành: Ubuntu 20.04/22.04 LTS (hoặc máy ảo VMware/WSL2).
-* Đã cài đặt **Docker** và **Docker Compose**.
+Dự án áp dụng đầy đủ **4 biện pháp bảo mật nâng cao**:
 
-### Các bước thực hiện:
+1. **Network Isolation (Phân tách mạng nội bộ Docker):**
+   - Tạo 2 mạng độc lập: `frontend_net` và `backend_net`.
+   - Cơ sở dữ liệu `mysql_db` chỉ kết nối vào `backend_net`, hoàn toàn không mở cổng thô ra ngoài Internet, ngăn chặn tối đa nguy cơ tấn công brute-force cổng DB từ bên ngoài.
+2. **Nginx Security Headers (Tiêu chí 3 & 6):**
+   - `X-Frame-Options: SAMEORIGIN`: Chống tấn công Clickjacking.
+   - `X-Content-Type-Options: nosniff`: Chống tấn công MIME-sniffing.
+   - `X-XSS-Protection: 1; mode=block`: Bật bộ lọc chống Cross-Site Scripting (XSS).
+   - `Referrer-Policy: strict-origin-when-cross-origin`: Bảo vệ rò rỉ URL nhạy cảm.
+   - `server_tokens off`: Ẩn thông tin phiên bản web server để tránh bị khai thác lỗ hổng đã biết.
+3. **Mã Hóa Mật Khẩu Nâng Cao (Password Hashing):**
+   - Sử dụng thuật toán `scrypt` kết hợp với chuỗi `salt` ngẫu nhiên 16-byte cho mỗi tài khoản, chống lại tấn công Rainbow Table và Brute-force tốc độ cao.
+4. **Bảo Vệ Phiên Làm Việc (Session Security):**
+   - Cookie phiên được ký điện tử bằng `HMAC-SHA256` với khóa bí mật `SESSION_SECRET`.
+   - Xác thực chữ ký bằng hàm `crypto.timingSafeEqual` để loại trừ hoàn toàn nguy cơ tấn công Timing Attack.
 
-#### Bước 1: Sao chép mã nguồn và vào thư mục dự án
+---
+
+## 🪵 4. Hệ Thống Log Tập Trung Loki + Promtail (Tiêu Chí 5)
+
+Hệ thống sử dụng **Promtail** tự động bắt các dòng log từ Docker Socket (`/var/run/docker.sock`) và gửi về **Loki**. 
+
+### Các câu truy vấn LogQL cơ bản trên Grafana (Explore > Data source: Loki):
+1. **Xem toàn bộ log của ứng dụng Web đặt vé:**
+   ```logql
+   {container_name="movie_web"}
+   ```
+2. **Lọc các thao tác Đặt vé thành công (POST /book):**
+   ```logql
+   {container_name="movie_web"} |= "POST /book"
+   ```
+3. **Lọc log cảnh báo hoặc lỗi hệ thống:**
+   ```logql
+   {container_name="movie_web"} |~ "(?i)(error|lỗi|fail|warn)"
+   ```
+4. **Xem log truy cập từ Nginx Reverse Proxy:**
+   ```logql
+   {container_name="movie_nginx"}
+   ```
+
+---
+
+## 📊 5. Hệ Thống Giám Sát Prometheus & Grafana (Tiêu Chí 4)
+
+Thu thập và hiển thị toàn diện trên 3 tầng:
+1. **Tầng Hệ điều hành (Host):** `node_exporter` đo CPU Usage, RAM, Disk I/O, Network Traffic.
+2. **Tầng Container:** `cadvisor` đo lượng tài nguyên tiêu thụ chi tiết của từng container Docker.
+3. **Tầng Cơ sở dữ liệu:** `mysql_exporter` đo số lượng kết nối (threads), QPS, buffer pool.
+4. **Tầng Nghiệp vụ Web (Business Metrics):**
+   - Tổng doanh thu bán vé (VND): `sum(movie_revenue_vnd_total)`
+   - Tỷ lệ vé bán theo phim: `sum by (movie_title) (movie_tickets_booked_total)`
+   - Số phiên người dùng online: `active_sessions_total`
+
+---
+
+## 🚀 6. Hướng Dẫn Cài Đặt & Triển Khai (Quick Start)
+
 ```bash
-git clone <URL_REPOSITORY_CUA_BAN>
-cd movie-system
-```
+# 1. Clone repository
+git clone https://github.com/HoangMinhDuc-Shop/DTC245200281.git
+cd DTC245200281
 
-#### Bước 2: Cấu hình biến môi trường
-Tạo file `.env` từ file mẫu `.env.example`:
-```bash
+# 2. Khởi tạo file môi trường
 cp .env.example .env
-```
-*(Tùy chọn: Có thể điền `TMDB_API_KEY` nếu muốn tự động đồng bộ thêm phim từ The Movie Database).*
 
-#### Bước 3: Khởi động toàn bộ cụm hệ thống bằng Docker Compose
-```bash
+# 3. Khởi chạy toàn bộ hệ thống
 sudo docker compose up -d --build
-```
-
-#### Bước 4: Kiểm tra trạng thái hoạt động
-```bash
-sudo docker compose ps
-```
-Khi thấy tất cả các container (`movie_nginx`, `movie_web`, `mysql_db`, `movie_phpmyadmin`, `prometheus`, `grafana`, `node_exporter`, `mysql_exporter`) đều ở trạng thái **`Up`** là hệ thống đã sẵn sàng 100%!
-
----
-
-## ✨ 4. Các Chức Năng Nổi Bật Của Dự Án
-
-### 🎬 A. Phía Khách Hàng (Client Portal)
-* **Xem phim & Chi tiết:** Hiển thị Poster HD, điểm đánh giá, thể loại và tóm tắt phim chuẩn rạp.
-* **Sơ đồ chọn ghế tương tác thời gian thực:** Phân loại Ghế Thường, Ghế VIP, tự động tính tổng tiền.
-* **Chống đặt trùng ghế (Race Condition Protection):** Ghế đã được mua sẽ lập tức bị khóa đỏ (`Occupied`) và lưu vào CSDL, người khác không thể đặt đè.
-* **Vé điện tử (E-Ticket):** Xuất vé điện tử có mã đặt vé và mã QR Check-in chuẩn rạp phim.
-
-### 🔑 B. Phân Quyền & Bảo Mật (Authentication)
-* Đăng ký, đăng nhập và đăng xuất phiên làm việc an toàn.
-* Mật khẩu được mã hóa an toàn bằng thuật toán `scrypt` kèm salt 16-byte ngẫu nhiên.
-* Cookie phiên được ký chống giả mạo bằng chữ ký điện tử `HMAC-SHA256`.
-
-### 🛡 C. Phía Quản Trị & Soát Vé
-* **Cổng Soát Vé (`/checkin`):** Nhập mã vé hoặc quét QR để kiểm tra tính hợp lệ của vé, ngăn chặn tình trạng dùng lại vé cũ (`USED`).
-* **Trang Admin (`/admin`):** Thống kê tổng doanh thu thực tế và quản lý toàn bộ danh sách vé đã bán ra.
-
-### 🗄 D. Quản Trị CSDL Với phpMyAdmin (`Port 8080`)
-* Truy cập `http://<IP>:8080` để xem và thao tác trực tiếp trên các bảng:
-  - `movies`: Danh sách phim chiếu rạp.
-  - `users`: Tài khoản khách hàng và quản trị viên.
-  - `orders`: Lịch sử đơn đặt vé.
-  - `booked_seats`: Dữ liệu ghế đã đặt theo từng suất chiếu.
-
-### 📊 E. Hệ Thống Giám Sát DevOps (Prometheus & Grafana)
-* **Giám sát hạ tầng Ubuntu OS:** Đo tải CPU, bộ nhớ RAM, dung lượng Disk I/O, Network Traffic qua `node_exporter`.
-* **Giám sát hiệu năng Database:** Đo số lượng kết nối, truy vấn mỗi giây (QPS), buffer pool qua `mysqld_exporter`.
-* **Đo lường chỉ số kinh doanh (Business Metrics):**
-  - `movie_tickets_booked_total`: Đếm số vé bán ra theo phim và loại ghế.
-  - `movie_revenue_vnd_total`: Đo tổng doanh thu theo thời gian thực (VND).
-  - `active_sessions_total`: Đo số lượng phiên người dùng đang hoạt động.
-
----
-
-## 📁 5. Cấu Trúc Thư Mục Dự Án
-
-```text
-movie-system/
-├── docker-compose.yml          # File điều phối toàn bộ các container Docker
-├── .env.example                # File mẫu cấu hình biến môi trường
-├── .my.cnf                     # Cấu hình chứng thực cho mysqld_exporter
-├── README.md                   # Tài liệu hướng dẫn sử dụng và triển khai
-├── nginx/
-│   └── nginx.conf              # Cấu hình Nginx Reverse Proxy cổng 80
-├── monitoring/
-│   └── prometheus.yml          # Cấu hình các target thu thập dữ liệu Prometheus
-└── web/
-    ├── Dockerfile              # Dockerfile đóng gói ứng dụng NodeJS
-    ├── package.json            # Khai báo thư viện và phụ thuộc NodeJS
-    ├── index.js                # Toàn bộ mã nguồn Backend, APIs & Metrics
-    └── views/                  # Giao diện EJS (HTML/CSS Glassmorphism)
-        ├── _head.ejs           # Header & CSS Dark Mode chung
-        ├── index.ejs           # Trang chủ & Sơ đồ chọn ghế Realtime
-        ├── login.ejs           # Trang đăng nhập
-        ├── register.ejs        # Trang đăng ký tài khoản
-        ├── success.ejs         # Tấm vé điện tử E-Ticket QR
-        ├── checkin.ejs         # Cổng soát vé tại rạp
-        └── admin.ejs           # Bảng điều khiển quản trị viên
 ```
