@@ -4,7 +4,7 @@ const dashboard = {
   title: 'Ban Ve - Monitoring He Thong',
   timezone: 'browser',
   schemaVersion: 42,
-  version: 5,
+  version: 6,
   refresh: '5s',
   time: { from: 'now-1h', to: 'now' },
   panels: [
@@ -155,6 +155,22 @@ const dashboard = {
           max: 100,
           custom: { drawStyle: 'line', fillOpacity: 10 }
         }
+      }
+    },
+    {
+      id: 8,
+      title: 'Nhat Ky Hoat Dong He Thong (Live Logs - Loki)',
+      type: 'logs',
+      gridPos: { h: 10, w: 24, x: 0, y: 22 },
+      datasource: { type: 'loki', uid: 'cg244zyzqew3ke' },
+      targets: [
+        { expr: '{container_name=~"movie_web|movie_nginx"}', refId: 'A' }
+      ],
+      options: {
+        showLabels: true,
+        wrapLogMessage: true,
+        enableLogDetails: true,
+        sortOrder: 'Descending'
       }
     }
   ]

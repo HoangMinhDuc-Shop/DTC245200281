@@ -85,15 +85,25 @@ const totalMoviesGauge = new client.Gauge({
 });
 register.registerMetric(totalMoviesGauge);
 
-// Middleware tự động đếm mọi HTTP request vào Prometheus
+// Middleware tự động đếm mọi HTTP request vào Prometheus & xuất Log chi tiết cho Loki
 app.use((req, res, next) => {
+    const start = Date.now();
     res.on('finish', () => {
+        const duration = Date.now() - start;
         const handler = req.route ? req.route.path : req.path;
+        
+        // 1. Ghi nhận Prometheus Metrics
         httpRequestsTotal.inc({
             method: req.method,
             handler: handler || req.path,
             status: `${res.statusCode}`
         });
+
+        // 2. Xuất Log có cấu trúc ra stdout (được Promtail cào và đẩy ngay vào Loki)
+        if (req.path !== '/metrics') {
+            const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+            console.log(`[HTTP] ${req.method} ${req.originalUrl || req.path} -> ${res.statusCode} (${duration}ms) - Client: ${clientIp}`);
+        }
     });
     next();
 });
@@ -281,6 +291,7 @@ app.post('/login', (req, res) => {
         res.setHeader('Set-Cookie', `user_auth=${encodedCookie}; Path=/; HttpOnly; SameSite=Lax`);
         
         activeUsersGauge.inc();
+        console.log(`[AUTH] Dang nhap thanh cong: User "${u.username}" (Quyen: ${u.role})`);
         res.redirect('/');
     });
 });
@@ -290,6 +301,7 @@ app.post('/register', (req, res) => {
     const hash = hashPw(password || '');
     db.query("INSERT INTO users (username, password, fullname) VALUES (?, ?, ?)", [username, hash, fullname], (err) => {
         if (err) return res.render('register', { user: null, error: 'Tên đăng nhập đã tồn tại!' });
+        console.log(`[REGISTER] Tao tai khoan moi thanh cong: "${username}" (${fullname})`);
         res.redirect('/login');
     });
 });
@@ -336,6 +348,8 @@ app.post('/book', (req, res) => {
                     db.query("INSERT INTO booked_seats (movie_title, showtime, seat_code, order_id) VALUES ?", [seatValues], () => {
                         totalTicketsBooked.inc({ movie_title, seat_type: seatList.some(s => s.includes('VIP')) ? 'VIP' : 'Standard' }, seatList.length);
                         totalRevenue.inc({ movie_title }, finalPrice);
+
+                        console.log(`[ORDER SUCCESS] Ma Ve: ${bookingCode} | Khach: ${req.user.username} | Phim: "${movie_title}" | Suat: ${showtime} | Ghe: [${seatList.join(', ')}] | Tong tien: ${finalPrice.toLocaleString('vi-VN')} VND`);
 
                         res.render('success', {
                             user: req.user,
