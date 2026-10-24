@@ -1,15 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CineMaster – Đặt vé thế hệ mới</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&display=swap" rel="stylesheet">
+<%- include('_head') %>
 <style>
-body{font-family:'Be Vietnam Pro',sans-serif;background:#05060d}
-.glass{background:rgba(255,255,255,.05);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1)}
-.neon{background:linear-gradient(90deg,#22d3ee,#a78bfa,#fb7185);-webkit-background-clip:text;color:transparent}
 .card{transform-style:preserve-3d;transition:transform .15s,box-shadow .3s}
 .card:hover{box-shadow:0 20px 60px -15px rgba(167,139,250,.55)}
 .screen{height:50px;width:80%;margin:0 auto 28px;border-top:3px solid #22d3ee;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(#22d3ee33,transparent);box-shadow:0 -12px 40px #22d3ee66}
@@ -19,7 +13,6 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:#05060d}
 .seat.sel{background:#a78bfa!important;border-color:#c4b5fd!important;color:#fff!important;box-shadow:0 0 14px #a78bfa}
 .seat.occ{background:#111;border-color:#222;color:#444;cursor:not-allowed}
 .seat:not(.occ):hover{transform:translateY(-3px)}
-.fade{animation:f .8s both}@keyframes f{from{opacity:0;transform:translateY(20px)}}
 </style>
 </head>
 <body class="text-slate-100 min-h-screen">

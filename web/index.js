@@ -47,6 +47,15 @@ app.use((req, res, next) => {
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 
+// 1. HTTP Requests Total chuẩn Prometheus
+const httpRequestsTotal = new client.Counter({
+    name: 'http_requests_total',
+    help: 'Tong so luot HTTP request den he thong',
+    labelNames: ['method', 'handler', 'status']
+});
+register.registerMetric(httpRequestsTotal);
+
+// 2. Custom Business Metrics: Vé đã đặt
 const totalTicketsBooked = new client.Counter({
     name: 'movie_tickets_booked_total',
     help: 'Tong so luong ve da dat',
@@ -54,6 +63,7 @@ const totalTicketsBooked = new client.Counter({
 });
 register.registerMetric(totalTicketsBooked);
 
+// 3. Custom Business Metrics: Doanh thu bán vé (VND)
 const totalRevenue = new client.Counter({
     name: 'movie_revenue_vnd_total',
     help: 'Tong doanh thu ban ve (VND)',
@@ -61,11 +71,32 @@ const totalRevenue = new client.Counter({
 });
 register.registerMetric(totalRevenue);
 
+// 4. Custom Business Metrics: Phiên hoạt động
 const activeUsersGauge = new client.Gauge({
     name: 'active_sessions_total',
     help: 'So luong phien nguoi dung dang hoat dong'
 });
 register.registerMetric(activeUsersGauge);
+
+// 5. Custom Business Metrics: Tổng số phim
+const totalMoviesGauge = new client.Gauge({
+    name: 'movie_catalog_total',
+    help: 'Tong so phim trong danh muc'
+});
+register.registerMetric(totalMoviesGauge);
+
+// Middleware tự động đếm mọi HTTP request vào Prometheus
+app.use((req, res, next) => {
+    res.on('finish', () => {
+        const handler = req.route ? req.route.path : req.path;
+        httpRequestsTotal.inc({
+            method: req.method,
+            handler: handler || req.path,
+            status: `${res.statusCode}`
+        });
+    });
+    next();
+});
 
 // Kết nối MySQL Pool
 const db = mysql.createPool({
@@ -185,7 +216,26 @@ function initDB() {
             order_id INT,
             UNIQUE KEY unique_seat (movie_title, showtime, seat_code)
         )
-    `);
+    `, () => {
+        // Đồng bộ số liệu từ Database MySQL vào Prometheus Metrics ngay khi khởi động
+        setTimeout(() => {
+            db.query("SELECT COUNT(*) AS total FROM movies", (err, r) => {
+                if (!err && r && r[0]) totalMoviesGauge.set(r[0].total);
+            });
+            db.query("SELECT movie_title, seats, total_price FROM orders", (err, rows) => {
+                if (!err && rows && rows.length > 0) {
+                    rows.forEach(row => {
+                        const seatList = (row.seats || '').split(',').map(s => s.trim()).filter(Boolean);
+                        const count = seatList.length || 1;
+                        const hasVip = seatList.some(s => s.includes('VIP'));
+                        totalTicketsBooked.inc({ movie_title: row.movie_title, seat_type: hasVip ? 'VIP' : 'Standard' }, count);
+                        totalRevenue.inc({ movie_title: row.movie_title }, Number(row.total_price) || 0);
+                    });
+                    console.log(`[Prometheus] Synced ${rows.length} existing orders into metrics.`);
+                }
+            });
+        }, 1500);
+    });
 }
 setTimeout(initDB, 3000);
 
